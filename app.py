@@ -2,8 +2,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Optional, List, Dict
 
+import bcrypt
 from flask import Flask, render_template, request, redirect, url_for, flash
-from codecs import encode
 import flask_login
 import sqlite3
 import random
@@ -124,7 +124,7 @@ def login():
     connection.close()
 
     # Checks that the password has been retrieved and whether it matches the password entered by the user
-    if password_row is not None and password_row[0] == encode(request.form['password'], 'rot_13'):
+    if password_row is not None and bcrypt.checkpw(request.form['password'].encode('utf-8'), password_row[0]):
         # Logs the user in if the details are correct
         user = User()
         user.id = username
@@ -182,8 +182,8 @@ def signup():
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     # encrypt the password with rot-13 cryptography
-    cursor.execute("insert into users (username, password, fullname) values (\"" + str(username) + "\", \""
-                   + encode(str(password), 'rot_13') + "\", \"" + str(fullname) + "\")")
+    cursor.execute("insert into users (username, password, fullname) values (?, ?, ?)",
+                   [username, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()), fullname])
     connection.commit()
     connection.close()
     # Redirects to login page
@@ -415,12 +415,10 @@ def dashboard():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    credit_score_result = cursor.execute("select credit_score from users where username = ?", [username]).fetchone()
+    credit_score = cursor.execute("select credit_score from users where username = ?", [username]).fetchone()[0]
     connection.close()
-    try:
-        credit_score = int(credit_score_result[0])
-    except ValueError | IndexError:
-        credit_score = -1
+    if not credit_score:
+        credit_score = 0
 
     # Retrieves the current user's username from the session and gets their accounts
     return render_template("dashboard.html",

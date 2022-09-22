@@ -272,17 +272,20 @@ def make_transaction():
     usersort = request.form['fromsortcode']
     useracc = request.form['fromaccountnumber']
 
+    if sort == usersort and acc == useracc:
+        flash('Cannot transfer money to same account', 'danger')
+        return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
+
     # convert the amount to pence
     try:
         amount = int(float(request.form['amount']) * 100)
     except ValueError:
         # Invalid amount
-        flash('Invalid amount given.', 'danger')
+        flash('Invalid amount to transfer given.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     if amount <= 0:
-        # Cannot be less than 0
-        flash('Amount given needs to larger than £0.', 'danger')
+        flash('Amount given to transfer needs to larger than £0.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Attempts to retrieve a bank account from the DATABASE which matches the 'to' details entered

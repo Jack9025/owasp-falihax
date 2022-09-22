@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Callable, Optional, List, Dict
 
 from flask import Flask, render_template, request, redirect, url_for, flash
@@ -13,6 +14,8 @@ app.secret_key = 'hello'
 login_manager = flask_login.LoginManager()
 navbar_page_names = dict()
 
+BASE_DIR = Path(__file__).resolve().parent
+DATABASE_FILE = BASE_DIR / "falihax.db"
 
 class User(flask_login.UserMixin):
     """"A user class which is needed for flask_login"""
@@ -22,7 +25,7 @@ class User(flask_login.UserMixin):
 @login_manager.user_loader
 def user_loader(username):
     """This tells flask_login how to reload a user object from the user ID stored in the session"""
-    connection = sqlite3.connect("falihax.db")
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from users where username = \"" + str(username) + "\"")
@@ -40,7 +43,7 @@ def user_loader(username):
 def request_loader(request):
     """This tells flask_login how to load a user object from a Flask request instead of using cookies"""
     username = request.form.get('username')
-    connection = sqlite3.connect("falihax.db")
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from users where username = \"" + str(username) + "\"")
@@ -110,8 +113,8 @@ def login():
     # Retrieves the username from the form
     username = request.form['username']
 
-    # Tries to retrieve a corresponding password from the database
-    connection = sqlite3.connect("falihax.db")
+    # Tries to retrieve a corresponding password from the DATABASE
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select password from users where username = \"" + str(username) + "\"")
@@ -154,8 +157,8 @@ def signup():
     # Retrieves the username from the form
     username = request.form['username']
 
-    # Tries to retrieve a user from the database with the entered username
-    connection = sqlite3.connect("falihax.db")
+    # Tries to retrieve a user from the DATABASE with the entered username
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from users where username = \"" + str(username) + "\"")
@@ -171,8 +174,8 @@ def signup():
     password = request.form['password']
     fullname = request.form['fullname']
 
-    # Inserts the new account details into the database
-    connection = sqlite3.connect("falihax.db")
+    # Inserts the new account details into the DATABASE
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     # encrypt the password with rot-13 cryptography
@@ -220,8 +223,8 @@ def open_account():
         # Creates the account number in the correct format
         acc = str(accnum).zfill(8)
 
-        # Tries to retrieve a bank account from the database with the same sort code or account number
-        connection = sqlite3.connect("falihax.db")
+        # Tries to retrieve a bank account from the DATABASE with the same sort code or account number
+        connection = sqlite3.connect(DATABASE_FILE)
         connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
         cursor.execute("select * from bank_accounts where sort_code = \"" + sort + "\" or account_number = \"" + acc +
@@ -237,8 +240,8 @@ def open_account():
     user = flask_login.current_user
     username = user.id
 
-    # Inserts the new bank account details into the database
-    connection = sqlite3.connect("falihax.db")
+    # Inserts the new bank account details into the DATABASE
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("insert into bank_accounts (username, sort_code, account_number, account_name) values (\""
@@ -267,8 +270,8 @@ def make_transaction():
     # convert the amount to pence
     amount = int(float(request.form['amount']) * 100)
 
-    # Attempts to retrieve a bank account from the database which matches the 'to' details entered
-    connection = sqlite3.connect("falihax.db")
+    # Attempts to retrieve a bank account from the DATABASE which matches the 'to' details entered
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from bank_accounts where sort_code = \"" + sort + "\" and account_number = \"" + acc +
@@ -285,8 +288,8 @@ def make_transaction():
     user = flask_login.current_user
     username = user.id
 
-    # Attempts to retrieve a bank account from the database which matches the 'from' details entered and belongs to the current user
-    connection = sqlite3.connect("falihax.db")
+    # Attempts to retrieve a bank account from the DATABASE which matches the 'from' details entered and belongs to the current user
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from bank_accounts where username = \"" + username + "\" and sort_code = \"" + usersort +
@@ -299,8 +302,8 @@ def make_transaction():
         flash('"From" account details are incorrect.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
-    # Inserts the transaction details into the database
-    connection = sqlite3.connect("falihax.db")
+    # Inserts the transaction details into the DATABASE
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("insert into transactions (from_sort_code, from_account_number, to_sort_code, to_account_number, "
@@ -326,8 +329,8 @@ def admin():
     username = request.form['username']
     score = request.form['score']
 
-    # Attempts to retrieve a user from the database with the username entered
-    connection = sqlite3.connect("falihax.db")
+    # Attempts to retrieve a user from the DATABASE with the username entered
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("select * from users where username = \"" + str(username) + "\"")
@@ -339,8 +342,8 @@ def admin():
         flash('User does not exist.', 'danger')
         return render_template("admin.html")
 
-    # Updates the user's credit score in the database
-    connection = sqlite3.connect("falihax.db")
+    # Updates the user's credit score in the DATABASE
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("update users set credit_score = " + str(score) + " where username = \"" + username + "\"")
@@ -358,7 +361,7 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
     :return: a list of accounts
     """
     # Attempts to retrieve any bank accounts that belong to the user
-    connection = sqlite3.connect("falihax.db")
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute(
@@ -377,7 +380,7 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
             name = row[2]
 
             # Adds up all transactions sent to the bank account
-            connection = sqlite3.connect("falihax.db")
+            connection = sqlite3.connect(DATABASE_FILE)
             connection.row_factory = sqlite3.Row
             cursor = connection.cursor()
             cursor.execute(
@@ -405,7 +408,7 @@ def dashboard():
     """Allows the user to view their accounts"""
     username = flask_login.current_user.id
     # get the users credit score
-    connection = sqlite3.connect("falihax.db")
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     credit_score = int(
@@ -423,7 +426,7 @@ def account(sort_code: str, account_number: str):
     username = user.id
 
     # Attempts to retrieve any bank accounts that belong to the current user
-    connection = sqlite3.connect("falihax.db")
+    connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute(

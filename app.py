@@ -8,7 +8,7 @@ import flask_login
 import sqlite3
 import random
 
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 app = Flask(__name__)
 app.secret_key = 'hello'
@@ -17,6 +17,7 @@ navbar_page_names = dict()
 
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_FILE = BASE_DIR / "falihax.db"
+
 
 class User(flask_login.UserMixin):
     """"A user class which is needed for flask_login"""
@@ -138,6 +139,7 @@ def login():
 
 
 @app.route('/logout')
+@login_required
 @add_to_navbar("Logout", condition=lambda: current_user.is_authenticated, side="right")
 def logout():
     """Used to log out a user"""
@@ -190,6 +192,7 @@ def signup():
 
 
 @app.route('/open_account', methods=['GET', 'POST'])
+@login_required
 @add_to_navbar("Open an Account", condition=lambda: current_user.is_authenticated)
 def open_account():
     """Used to open a bank account for the current user"""
@@ -255,6 +258,7 @@ def open_account():
 
 
 @app.route('/make_transaction', methods=['GET', 'POST'])
+@login_required
 @add_to_navbar("Make Transaction", condition=lambda: current_user.is_authenticated)
 def make_transaction():
     """Used to make a transaction"""
@@ -316,6 +320,7 @@ def make_transaction():
 
 
 @app.route('/admin', methods=['GET', 'POST'])
+@login_required
 @add_to_navbar("Admin", condition=lambda: current_user.is_authenticated and current_user.id == "admin")
 def admin():
     """Allows admins to adjust users' credit scores"""
@@ -401,6 +406,7 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
 
 
 @app.route('/dashboard')
+@login_required
 @add_to_navbar("Dashboard", condition=lambda: current_user.is_authenticated)
 def dashboard():
     """Allows the user to view their accounts"""
@@ -423,6 +429,7 @@ def dashboard():
 
 
 @app.route('/account/<sort_code>/<account_number>')
+@login_required
 def account(sort_code: str, account_number: str):
     """Allows the user to view the statements for an account"""
     # Retrieves the current user's username from the session

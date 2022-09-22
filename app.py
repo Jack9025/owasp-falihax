@@ -1,3 +1,4 @@
+from functools import wraps
 from pathlib import Path
 from typing import Callable, Optional, List, Dict
 
@@ -28,7 +29,7 @@ def user_loader(username):
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from users where username = \"" + str(username) + "\"")
+    cursor.execute("select * from users where username = ?", [str(username)])
     account = cursor.fetchone()
     connection.close()
     if not account:
@@ -46,7 +47,7 @@ def request_loader(request):
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from users where username = \"" + str(username) + "\"")
+    cursor.execute("select * from users where username = ?", [str(username)])
     account = cursor.fetchone()
     connection.close()
     if not account:
@@ -117,7 +118,7 @@ def login():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select password from users where username = \"" + str(username) + "\"")
+    cursor.execute("select password from users where username = ?", [str(username)])
     password_row = cursor.fetchone()
     connection.close()
 
@@ -161,7 +162,7 @@ def signup():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from users where username = \"" + str(username) + "\"")
+    cursor.execute("select * from users where username = ?", [str(username)])
     row = cursor.fetchone()
     connection.close()
 
@@ -227,8 +228,7 @@ def open_account():
         connection = sqlite3.connect(DATABASE_FILE)
         connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
-        cursor.execute("select * from bank_accounts where sort_code = \"" + sort + "\" or account_number = \"" + acc +
-                       "\"")
+        cursor.execute("select * from bank_accounts where sort_code = ? or account_number = ?", [sort, acc])
         row = cursor.fetchone()
         connection.close()
 
@@ -244,8 +244,8 @@ def open_account():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("insert into bank_accounts (username, sort_code, account_number, account_name) values (\""
-                   + str(username) + "\", \"" + str(sort) + "\", \"" + str(acc) + "\", \"" + str(account) + "\")")
+    cursor.execute("insert into bank_accounts (username, sort_code, account_number, account_name) values (?,?,?,?)",
+                   [username, sort, acc, account])
     connection.commit()
     connection.close()
 
@@ -274,8 +274,7 @@ def make_transaction():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from bank_accounts where sort_code = \"" + sort + "\" and account_number = \"" + acc +
-                   "\"")
+    cursor.execute("select * from bank_accounts where sort_code = ? and account_number = ?", [sort, acc])
     row = cursor.fetchone()
     connection.close()
 
@@ -292,8 +291,8 @@ def make_transaction():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from bank_accounts where username = \"" + username + "\" and sort_code = \"" + usersort +
-                   "\" and account_number = \"" + useracc + "\"")
+    cursor.execute("select * from bank_accounts where username = ? and sort_code = ? and account_number = ?",
+                   [username, usersort, useracc])
     row = cursor.fetchone()
     connection.close()
 
@@ -307,8 +306,7 @@ def make_transaction():
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute("insert into transactions (from_sort_code, from_account_number, to_sort_code, to_account_number, "
-                   "amount) values (\"" + usersort + "\", \"" + useracc + "\", \"" + str(sort) + "\", \"" + str(acc) +
-                   "\", \"" + str(amount) + "\")")
+                   "amount) values (?,?,?,?,?)", [usersort, useracc, sort, acc, amount])
     connection.commit()
     connection.close()
 
@@ -333,7 +331,7 @@ def admin():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select * from users where username = \"" + str(username) + "\"")
+    cursor.execute("select * from users where username = ?", [username])
     row = cursor.fetchone()
     connection.close()
 
@@ -346,7 +344,7 @@ def admin():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("update users set credit_score = " + str(score) + " where username = \"" + username + "\"")
+    cursor.execute("update users set credit_score = ? where username = ?", [score, username])
     connection.commit()
     connection.close()
 
@@ -365,7 +363,7 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute(
-        "select sort_code, account_number, account_name from bank_accounts where username = \"" + str(username) + "\"")
+        "select sort_code, account_number, account_name from bank_accounts where username = ?", [str(username)])
     rows = cursor.fetchall()
     connection.close()
 
@@ -411,11 +409,17 @@ def dashboard():
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    credit_score = int(
-        cursor.execute("select credit_score from users where username = \"" + username + "\"").fetchone()[0])
+    credit_score_result = cursor.execute("select credit_score from users where username = ?", [username]).fetchone()
     connection.close()
+    try:
+        credit_score = int(credit_score_result[0])
+    except ValueError | IndexError:
+        credit_score = -1
+
     # Retrieves the current user's username from the session and gets their accounts
-    return render_template("dashboard.html", accounts=get_accounts(flask_login.current_user.id), credit_score=credit_score)
+    return render_template("dashboard.html",
+                           accounts=get_accounts(flask_login.current_user.id),
+                           credit_score=credit_score)
 
 
 @app.route('/account/<sort_code>/<account_number>')
@@ -430,15 +434,17 @@ def account(sort_code: str, account_number: str):
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
     cursor.execute(
-        f"select * from transactions where (to_account_number == \"{account_number}\" and to_sort_code == \"{sort_code}\") "
-        f"or (from_account_number == \"{account_number}\" and from_sort_code == \"{sort_code}\") order by timestamp desc;")
+        "select * from transactions where (to_account_number = ? and to_sort_code = ?) "
+        "or (from_account_number = ? and from_sort_code = ?) order by timestamp desc;",
+        [account_number, sort_code, account_number, sort_code])
     rows = cursor.fetchall()
     cursor.execute(
-        f"SELECT"
-        f"(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code == '{sort_code}' AND to_account_number == '{account_number}')"
-        f"-"
-        f"(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code == '{sort_code}' AND from_account_number == '{account_number}')"
-        f"AS total;"
+        "SELECT"
+        "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code = ? AND to_account_number = ?)"
+        "-"
+        "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code = ? AND from_account_number = ?)"
+        "AS total;",
+        [sort_code, account_number, sort_code, account_number]
     )
     balance = amount_format(cursor.fetchone()[0])
     connection.close()

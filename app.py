@@ -271,8 +271,19 @@ def make_transaction():
     acc = request.form['toaccountnumber']
     usersort = request.form['fromsortcode']
     useracc = request.form['fromaccountnumber']
+
     # convert the amount to pence
-    amount = int(float(request.form['amount']) * 100)
+    try:
+        amount = int(float(request.form['amount']) * 100)
+    except ValueError:
+        # Invalid amount
+        flash('Invalid amount given.', 'danger')
+        return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
+
+    if amount <= 0:
+        # Cannot be less than 0
+        flash('Amount given needs to larger than £0.', 'danger')
+        return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Attempts to retrieve a bank account from the DATABASE which matches the 'to' details entered
     connection = sqlite3.connect(DATABASE_FILE)
@@ -387,11 +398,12 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
             connection.row_factory = sqlite3.Row
             cursor = connection.cursor()
             cursor.execute(
-                f"SELECT"
-                f"(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code == '{sort_code}' AND to_account_number == '{account_number}')"
-                f"-"
-                f"(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code == '{sort_code}' AND from_account_number == '{account_number}')"
-                f"AS total;"
+                "SELECT"
+                "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code = ? AND to_account_number = ?)"
+                "-"
+                "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code = ? AND from_account_number = ?)"
+                "AS total;",
+                [sort_code, account_number, sort_code, account_number]
             )
             balance = amount_format(cursor.fetchone()[0])
             connection.close()

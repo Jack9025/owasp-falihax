@@ -358,6 +358,17 @@ def admin():
     username = request.form['username']
     score = request.form['score']
 
+    # Check credit score is integer and is between 0 and 999
+    try:
+        score = int(score)
+    except ValueError:
+        flash('Invalid credit score entered.', 'danger')
+        return render_template("admin.html")
+
+    if score > 999 or score < 0:
+        flash('Credit score must be between 0 to 999', 'danger')
+        return render_template("admin.html")
+
     # Attempts to retrieve a user from the DATABASE with the username entered
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row

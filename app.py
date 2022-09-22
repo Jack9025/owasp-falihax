@@ -9,6 +9,7 @@ import sqlite3
 import random
 
 from flask_login import current_user, login_required
+from werkzeug.exceptions import BadRequestKeyError
 
 app = Flask(__name__)
 app.secret_key = 'hello'
@@ -196,6 +197,17 @@ def signup():
     return redirect(url_for('login'))
 
 
+COMPANY_NAME = define_name_constants()['company_name']
+ACCOUNT_NAMES = [
+    f"{COMPANY_NAME} Super Saver",
+    f"{COMPANY_NAME} Credit Card",
+    f"{COMPANY_NAME} Help to Buy ISA",
+    f"{COMPANY_NAME} Current Account",
+    f"My First {COMPANY_NAME} Current Account (for children)",
+    f"My First {COMPANY_NAME} Pension Fund (for children)"
+]
+
+
 @app.route('/open_account', methods=['GET', 'POST'])
 @login_required
 @add_to_navbar("Open an Account", condition=lambda: current_user.is_authenticated)
@@ -204,17 +216,18 @@ def open_account():
     # Returns an account selection form when the user navigates to the page
     if request.method == 'GET':
         company_name = define_name_constants()['company_name']
-        return render_template("open_account.html", account_names=[
-            f"{company_name} Super Saver",
-            f"{company_name} Credit Card",
-            f"{company_name} Help to Buy ISA",
-            f"{company_name} Current Account",
-            f"My First {company_name} Current Account (for children)",
-            f"My First {company_name} Pension Fund (for children)"
-        ])
+        return render_template("open_account.html", account_names=ACCOUNT_NAMES)
 
     # Retrieves the account type from the form
-    account = request.form['account']
+    try:
+        account = request.form['account']
+    except BadRequestKeyError:
+        account = None
+
+    # Check if account name is valid
+    if account not in ACCOUNT_NAMES:
+        flash('Invalid account name selected.', 'danger')
+        return render_template("open_account.html", account_names=ACCOUNT_NAMES)
 
     # Flag for sort code/account number generation
     unique = False

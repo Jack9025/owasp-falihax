@@ -175,7 +175,12 @@ def signup():
 
     # Retrieves the password and name from the form
     password = request.form['password']
+    password2 = request.form['password2']
     fullname = request.form['fullname']
+
+    if password != password2:
+        flash('Passwords did not match.', 'warning')
+        return render_template("signup.html")
 
     # Inserts the new account details into the DATABASE
     connection = sqlite3.connect(DATABASE_FILE)

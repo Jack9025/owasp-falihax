@@ -449,6 +449,19 @@ def account(sort_code: str, account_number: str):
     user = flask_login.current_user
     username = user.id
 
+    # Check that user has the account that they can view
+    connection = sqlite3.connect(DATABASE_FILE)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+    cursor.execute("select * from bank_accounts where sort_code = ? and account_number = ? and username = ?",
+                   [sort_code, account_number, username])
+    row = cursor.fetchone()
+    connection.close()
+
+    if not row:
+        return render_template("error.html",
+                               error_msg="Unable to show account - Check you are logged in as correct user"), 401
+
     # Attempts to retrieve any bank accounts that belong to the current user
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row

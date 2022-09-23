@@ -43,25 +43,6 @@ def user_loader(username):
     return user
 
 
-@login_manager.request_loader
-def request_loader(request):
-    """This tells flask_login how to load a user object from a Flask request instead of using cookies"""
-    # TODO: Fix using form
-    username = request.form.get('username')
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from users where username = ?", [str(username)])
-    account = cursor.fetchone()
-    connection.close()
-    if not account:
-        return
-
-    user = User()
-    user.id = username
-    return user
-
-
 @app.context_processor
 def define_name_constants() -> dict:
     """

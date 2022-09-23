@@ -122,8 +122,10 @@ def login():
     password_row = cursor.fetchone()
     connection.close()
 
+    password_form = request.form.get('password')
+
     # Checks that the password has been retrieved and whether it matches the password entered by the user
-    if password_row is not None and bcrypt.checkpw(request.form['password'].encode('utf-8'), password_row[0]):
+    if password_row is not None and bcrypt.checkpw(password_form.encode('utf-8'), password_row[0]):
         # Logs the user in if the details are correct
         user = User()
         user.id = username
@@ -172,7 +174,7 @@ def signup():
         return render_template("signup.html", captcha=captcha)
 
     # Retrieves the username from the form
-    username = request.form['username']
+    username = request.form.get('username')
 
     # Tries to retrieve a user from the DATABASE with the entered username
     connection = sqlite3.connect(DATABASE_FILE)
@@ -188,9 +190,9 @@ def signup():
         return render_template("signup.html")
 
     # Retrieves the password and name from the form
-    password = request.form['password']
-    password2 = request.form['password2']
-    fullname = request.form['fullname']
+    password = request.form.get('password')
+    password2 = request.form.get('password2')
+    fullname = request.form.get('fullname')
 
     if password != password2:
         flash('Passwords did not match.', 'warning')
@@ -233,7 +235,7 @@ def open_account():
 
     # Retrieves the account type from the form
     try:
-        account = request.form['account']
+        account = request.form.get('account')
     except BadRequestKeyError:
         account = None
 
@@ -298,10 +300,10 @@ def make_transaction():
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Retrieves the infomation from the form
-    sort = request.form['tosortcode']
-    acc = request.form['toaccountnumber']
-    usersort = request.form['fromsortcode']
-    useracc = request.form['fromaccountnumber']
+    sort = request.form.get('tosortcode')
+    acc = request.form.get('toaccountnumber')
+    usersort = request.form.get('fromsortcode')
+    useracc = request.form.get('fromaccountnumber')
 
     if sort == usersort and acc == useracc:
         flash('Cannot transfer money to same account', 'danger')
@@ -309,7 +311,7 @@ def make_transaction():
 
     # convert the amount to pence
     try:
-        amount = int(float(request.form['amount']) * 100)
+        amount = int(float(request.form.get('amount')) * 100)
     except ValueError:
         # Invalid amount
         flash('Invalid amount to transfer given.', 'danger')
@@ -381,8 +383,8 @@ def admin():
         return render_template("admin.html")
 
     # Retrieves the information from the form
-    username = request.form['username']
-    score = request.form['score']
+    username = request.form.get('username')
+    score = request.form.get('score')
 
     # Check credit score is integer and is between 0 and 999
     try:

@@ -1,9 +1,10 @@
+import time
 from functools import wraps
 from pathlib import Path
 from typing import Callable, Optional, List, Dict
 
 import bcrypt
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import flask_login
 import sqlite3
 import random
@@ -45,6 +46,7 @@ def user_loader(username):
 @login_manager.request_loader
 def request_loader(request):
     """This tells flask_login how to load a user object from a Flask request instead of using cookies"""
+    # TODO: Fix using form
     username = request.form.get('username')
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
@@ -113,14 +115,26 @@ def login():
     if request.method == 'GET':
         return render_template("login.html")
 
+    # Check if user had 5 failed login attempts
+    if session.get('attempts', 0) >= 5:
+        waiting = session.get('failed_time', 0) + 300 - time.time()
+        if waiting > 0:
+            # Time still remaining
+            flash(f'You must wait {round(waiting)} second(s) before attempting to login again', 'danger')
+            return render_template("login.html")
+        else:
+            # Time expired
+            session['attempts'] = 0
+            session['failed_time'] = 0
+
     # Retrieves the username from the form
-    username = request.form['username']
+    username = request.form.get('username')
 
     # Tries to retrieve a corresponding password from the DATABASE
     connection = sqlite3.connect(DATABASE_FILE)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("select password from users where username = ?", [str(username)])
+    cursor.execute("select password from users where username = ?", [username])
     password_row = cursor.fetchone()
     connection.close()
 
@@ -130,12 +144,19 @@ def login():
         user = User()
         user.id = username
         flask_login.login_user(user)
+        session['attempts'] = 0
         # Redirects to dashboard
         flash('Welcome!', 'primary')
         return redirect(url_for('dashboard'))
 
-    # Returns a failure message if the details are incorrect
-    flash('Login failed.', 'danger')
+    # Returns a failure message if the details are incorrect and update attempt counter
+    session['attempts'] = session.get('attempts', 0) + 1
+    session['failed_time'] = time.time()
+    if session['attempts'] == 5:
+        flash('You have exceeded the number of failed login attempts. You must wait 5 minutes before trying again.',
+              'danger')
+    else:
+        flash(f"Login failed. {5 - session['attempts']} attempt(s) remaining", 'danger')
     return render_template("login.html")
 
 

@@ -1,3 +1,4 @@
+import re
 import time
 from pathlib import Path
 from typing import Callable, Optional, List, Dict
@@ -85,6 +86,32 @@ def amount_format(amount: int) -> str:
     return f"{'-' if amount < 0 else ''}£{(abs(amount) // 100):,}.{(abs(amount) % 100):02}"
 
 
+def valid_password(password: str) -> bool:
+    """
+    Checks if a password is at least 8 characters and contains at least one capital, lowercase, number and
+    special character
+    :param password: password to be checked
+    :return: if the password was valid
+    """
+    if len(password) < 8:
+        # Must be at least 8 characters
+        return False
+    elif re.search(r'[A-Z]+', password):
+        # Must contain a capital
+        return False
+    elif re.search(r'[a-z]+', password):
+        # Must contain a lower case
+        return False
+    elif re.search(r'[0-9]+', password):
+        # Must contain a number
+        return False
+    elif re.search(r'\W+', password):
+        # Must contain a special character
+        return False
+    else:
+        return True
+
+
 @app.route("/")
 @add_to_navbar("Home")
 def homepage():
@@ -162,8 +189,8 @@ def logout():
 def signup():
     """Used for creating a user account"""
     # Returns a sign up form when the user navigates to the page
+    captcha = CAPTCHA.create()
     if request.method == 'GET':
-        captcha = CAPTCHA.create()
         return render_template("signup.html", captcha=captcha)
 
     c_hash = request.form.get('captcha-hash')
@@ -187,7 +214,7 @@ def signup():
     # If a row is retrieved then the username is already taken
     if row is not None:
         flash('An account with this username already exists. Please try again.', 'warning')
-        return render_template("signup.html")
+        return render_template("signup.html", captcha=captcha)
 
     # Retrieves the password and name from the form
     password = request.form.get('password')
@@ -196,7 +223,11 @@ def signup():
 
     if password != password2:
         flash('Passwords did not match.', 'warning')
-        return render_template("signup.html")
+        return render_template("signup.html", captcha=captcha)
+
+    if not valid_password(password):
+        flash('Password did not meet requirements', 'warning')
+        return render_template("signup.html", captcha=captcha)
 
     # Inserts the new account details into the DATABASE
     connection = sqlite3.connect(DATABASE_FILE)

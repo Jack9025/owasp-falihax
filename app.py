@@ -1,19 +1,22 @@
 import time
-from functools import wraps
 from pathlib import Path
 from typing import Callable, Optional, List, Dict
-
 import bcrypt
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import flask_login
 import sqlite3
 import random
-
 from flask_login import current_user, login_required
 from werkzeug.exceptions import BadRequestKeyError
+from flask_simple_captcha import CAPTCHA
 
 app = Flask(__name__)
 app.secret_key = 'hello'
+
+CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY':'wMmeltW4mhwidorQRli6Oijuhygtfgybunxx9VPXldz'}
+CAPTCHA = CAPTCHA(config=CAPTCHA_CONFIG)
+app = CAPTCHA.init_app(app)
+
 login_manager = flask_login.LoginManager()
 navbar_page_names = dict()
 
@@ -158,7 +161,15 @@ def signup():
     """Used for creating a user account"""
     # Returns a sign up form when the user navigates to the page
     if request.method == 'GET':
-        return render_template("signup.html")
+        captcha = CAPTCHA.create()
+        return render_template("signup.html", captcha=captcha)
+
+    c_hash = request.form.get('captcha-hash')
+    c_text = request.form.get('captcha-text')
+    if not CAPTCHA.verify(c_text, c_hash):
+        captcha = CAPTCHA.create()
+        flash('CAPTCHA failed.', 'danger')
+        return render_template("signup.html", captcha=captcha)
 
     # Retrieves the username from the form
     username = request.form['username']

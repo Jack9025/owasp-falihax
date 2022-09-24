@@ -1,50 +1,37 @@
+import random
 import re
 import time
-from pathlib import Path
 from typing import Callable, Optional, List, Dict
+
 import bcrypt
-from flask import Flask, render_template, request, redirect, url_for, flash, session
 import flask_login
-import sqlite3
-import random
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import current_user, login_required
-from werkzeug.exceptions import BadRequestKeyError
 from flask_simple_captcha import CAPTCHA
+from models import User, db, BankAccount, Transaction
 
 app = Flask(__name__)
 app.secret_key = 'hello'
 
-CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY':'wMmeltW4mhwidorQRli6Oijuhygtfgybunxx9VPXldz'}
+# Database
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# CAPTCHA
+CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY': 'wMmeltW4mhwidorQRli6Oijuhygtfgybunxx9VPXldz'}
 CAPTCHA = CAPTCHA(config=CAPTCHA_CONFIG)
 app = CAPTCHA.init_app(app)
 
 login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
 navbar_page_names = dict()
-
-BASE_DIR = Path(__file__).resolve().parent
-DATABASE_FILE = BASE_DIR / "falihax.db"
-
-
-class User(flask_login.UserMixin):
-    """"A user class which is needed for flask_login"""
-    pass
 
 
 @login_manager.user_loader
 def user_loader(username):
     """This tells flask_login how to reload a user object from the user ID stored in the session"""
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from users where username = ?", [str(username)])
-    account = cursor.fetchone()
-    connection.close()
-    if not account:
-        return
-
-    user = User()
-    user.id = username
-    return user
+    return db.session.get(User, username)
 
 
 @app.context_processor
@@ -96,16 +83,16 @@ def valid_password(password: str) -> bool:
     if len(password) < 8:
         # Must be at least 8 characters
         return False
-    elif re.search(r'[A-Z]+', password):
+    elif not re.search(r'[A-Z]', password):
         # Must contain a capital
         return False
-    elif re.search(r'[a-z]+', password):
+    elif not re.search(r'[a-z]', password):
         # Must contain a lower case
         return False
-    elif re.search(r'[0-9]+', password):
+    elif not re.search(r'[0-9]', password):
         # Must contain a number
         return False
-    elif re.search(r'\W+', password):
+    elif not re.search(r'\W', password):
         # Must contain a special character
         return False
     else:
@@ -142,20 +129,13 @@ def login():
     username = request.form.get('username')
 
     # Tries to retrieve a corresponding password from the DATABASE
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select password from users where username = ?", [username])
-    password_row = cursor.fetchone()
-    connection.close()
+    user = db.session.get(User, username)
 
     password_form = request.form.get('password')
 
     # Checks that the password has been retrieved and whether it matches the password entered by the user
-    if password_row is not None and bcrypt.checkpw(password_form.encode('utf-8'), password_row[0]):
+    if user is not None and bcrypt.checkpw(password_form.encode('utf-8'), user.password):
         # Logs the user in if the details are correct
-        user = User()
-        user.id = username
         flask_login.login_user(user)
         session['attempts'] = 0
         # Redirects to dashboard
@@ -204,15 +184,10 @@ def signup():
     username = request.form.get('username')
 
     # Tries to retrieve a user from the DATABASE with the entered username
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from users where username = ?", [str(username)])
-    row = cursor.fetchone()
-    connection.close()
+    user = db.session.get(User, username)
 
     # If a row is retrieved then the username is already taken
-    if row is not None:
+    if user is not None:
         flash('An account with this username already exists. Please try again.', 'warning')
         return render_template("signup.html", captcha=captcha)
 
@@ -230,14 +205,14 @@ def signup():
         return render_template("signup.html", captcha=captcha)
 
     # Inserts the new account details into the DATABASE
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    # encrypt the password with rot-13 cryptography
-    cursor.execute("insert into users (username, password, fullname) values (?, ?, ?)",
-                   [username, bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()), fullname])
-    connection.commit()
-    connection.close()
+    user = User()
+    user.id = username
+    user.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    user.fullname = fullname
+    user.credit_score = 0
+    db.session.add(user)
+    db.session.commit()
+
     # Redirects to login page
     flash('Sign up successful!', 'success')
     return redirect(url_for('login'))
@@ -265,10 +240,7 @@ def open_account():
         return render_template("open_account.html", account_names=ACCOUNT_NAMES)
 
     # Retrieves the account type from the form
-    try:
-        account = request.form.get('account')
-    except BadRequestKeyError:
-        account = None
+    account = request.form.get('account')
 
     # Check if account name is valid
     if account not in ACCOUNT_NAMES:
@@ -292,15 +264,10 @@ def open_account():
         acc = str(accnum).zfill(8)
 
         # Tries to retrieve a bank account from the DATABASE with the same sort code or account number
-        connection = sqlite3.connect(DATABASE_FILE)
-        connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute("select * from bank_accounts where sort_code = ? or account_number = ?", [sort, acc])
-        row = cursor.fetchone()
-        connection.close()
+        found_account = db.session.get(BankAccount, (sort, acc))
 
         # If no account is found then the numbers are unique
-        if row is None:
+        if found_account is None:
             unique = True
 
     # Retrieves the current user's username from the session
@@ -308,13 +275,13 @@ def open_account():
     username = user.id
 
     # Inserts the new bank account details into the DATABASE
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("insert into bank_accounts (username, sort_code, account_number, account_name) values (?,?,?,?)",
-                   [username, sort, acc, account])
-    connection.commit()
-    connection.close()
+    new_account = BankAccount()
+    new_account.username = username
+    new_account.sort_code = sort
+    new_account.account_number = acc
+    new_account.account_name = account
+    db.session.add(new_account)
+    db.session.commit()
 
     # Redirects to homepage
     flash('Account opened successfully.', 'success')
@@ -353,15 +320,10 @@ def make_transaction():
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Attempts to retrieve a bank account from the DATABASE which matches the 'to' details entered
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from bank_accounts where sort_code = ? and account_number = ?", [sort, acc])
-    row = cursor.fetchone()
-    connection.close()
+    to_account = db.session.get(BankAccount, (sort, acc))
 
     # If nothing is retrieved then the details are incorrect
-    if row is None:
+    if to_account is None:
         flash('Recipient account details are incorrect.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
@@ -370,27 +332,22 @@ def make_transaction():
     username = user.id
 
     # Attempts to retrieve a bank account from the DATABASE which matches the 'from' details entered and belongs to the current user
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from bank_accounts where username = ? and sort_code = ? and account_number = ?",
-                   [username, usersort, useracc])
-    row = cursor.fetchone()
-    connection.close()
+    from_account = db.session.get(BankAccount, (usersort, useracc))
 
     # If nothing is retrieved then the details are incorrect
-    if row is None:
+    if from_account is None or from_account.username != username:
         flash('"From" account details are incorrect.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Inserts the transaction details into the DATABASE
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("insert into transactions (from_sort_code, from_account_number, to_sort_code, to_account_number, "
-                   "amount) values (?,?,?,?,?)", [usersort, useracc, sort, acc, amount])
-    connection.commit()
-    connection.close()
+    transaction = Transaction()
+    transaction.from_sort_code = usersort
+    transaction.from_account_number = useracc
+    transaction.to_sort_code = sort
+    transaction.to_account_number = acc
+    transaction.amount = amount
+    db.session.add(transaction)
+    db.session.commit()
 
     flash('Transaction complete.', 'success')
     # Redirects to the transactions page
@@ -429,25 +386,16 @@ def admin():
         return render_template("admin.html")
 
     # Attempts to retrieve a user from the DATABASE with the username entered
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from users where username = ?", [username])
-    row = cursor.fetchone()
-    connection.close()
+    user = db.session.get(User, username)
 
     # If nothing is retrieved then the username is incorrect
-    if row is None:
+    if user is None:
         flash('User does not exist.', 'danger')
         return render_template("admin.html")
 
     # Updates the user's credit score in the DATABASE
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("update users set credit_score = ? where username = ?", [score, username])
-    connection.commit()
-    connection.close()
+    user.credit_score = score
+    db.session.commit()
 
     flash('Credit score set successfully.', 'success')
     return render_template("admin.html")
@@ -460,46 +408,23 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
     :return: a list of accounts
     """
     # Attempts to retrieve any bank accounts that belong to the user
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute(
-        "select sort_code, account_number, account_name from bank_accounts where username = ?", [str(username)])
-    rows = cursor.fetchall()
-    connection.close()
+    accounts = db.session.query(BankAccount).where(BankAccount.username == username)
 
-    accounts = []
+    accounts_format = []
 
     # If nothing is retrieved then the user does not have a bank account
-    if rows:
-        for row in rows:
-            # Retrieves sort code, account number and name
-            sort_code = row[0]
-            account_number = row[1]
-            name = row[2]
-
+    if accounts:
+        for account in accounts:
             # Adds up all transactions sent to the bank account
-            connection = sqlite3.connect(DATABASE_FILE)
-            connection.row_factory = sqlite3.Row
-            cursor = connection.cursor()
-            cursor.execute(
-                "SELECT"
-                "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code = ? AND to_account_number = ?)"
-                "-"
-                "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code = ? AND from_account_number = ?)"
-                "AS total;",
-                [sort_code, account_number, sort_code, account_number]
-            )
-            balance = amount_format(cursor.fetchone()[0])
-            connection.close()
+            balance = amount_format(account.get_balance())
 
-            accounts.append({
-                "sort": sort_code,
-                "account": account_number,
-                "name": name,
+            accounts_format.append({
+                "sort": account.sort_code,
+                "account": account.account_number,
+                "name": account.account_name,
                 "balance": balance
             })
-    return accounts
+    return accounts_format
 
 
 @app.route('/dashboard')
@@ -507,20 +432,10 @@ def get_accounts(username: str) -> List[Dict[str, str]]:
 @add_to_navbar("Dashboard", condition=lambda: current_user.is_authenticated)
 def dashboard():
     """Allows the user to view their accounts"""
-    username = flask_login.current_user.id
-    # get the users credit score
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    credit_score = cursor.execute("select credit_score from users where username = ?", [username]).fetchone()[0]
-    connection.close()
-    if not credit_score:
-        credit_score = 0
-
     # Retrieves the current user's username from the session and gets their accounts
     return render_template("dashboard.html",
                            accounts=get_accounts(flask_login.current_user.id),
-                           credit_score=credit_score)
+                           credit_score=current_user.credit_score)
 
 
 @app.route('/account/<sort_code>/<account_number>')
@@ -532,65 +447,51 @@ def account(sort_code: str, account_number: str):
     username = user.id
 
     # Check that user has the account that they can view
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute("select * from bank_accounts where sort_code = ? and account_number = ? and username = ?",
-                   [sort_code, account_number, username])
-    row = cursor.fetchone()
-    connection.close()
+    account = db.session.get(BankAccount, (sort_code, account_number))
 
-    if not row:
+    if not account or account.username != username:
         return render_template("error.html",
                                error_msg="Unable to show account - Check you are logged in as correct user"), 401
 
     # Attempts to retrieve any bank accounts that belong to the current user
-    connection = sqlite3.connect(DATABASE_FILE)
-    connection.row_factory = sqlite3.Row
-    cursor = connection.cursor()
-    cursor.execute(
-        "select * from transactions where (to_account_number = ? and to_sort_code = ?) "
-        "or (from_account_number = ? and from_sort_code = ?) order by timestamp desc;",
-        [account_number, sort_code, account_number, sort_code])
-    rows = cursor.fetchall()
-    cursor.execute(
-        "SELECT"
-        "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE to_sort_code = ? AND to_account_number = ?)"
-        "-"
-        "(SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE from_sort_code = ? AND from_account_number = ?)"
-        "AS total;",
-        [sort_code, account_number, sort_code, account_number]
-    )
-    balance = amount_format(cursor.fetchone()[0])
-    connection.close()
+    transactions = db.session.query(Transaction).where(((Transaction.to_sort_code == account.sort_code) &
+                                                        (Transaction.to_account_number == account.account_number)) |
+                                                       ((Transaction.from_sort_code == account.sort_code) &
+                                                        (Transaction.from_account_number == account.account_number))
+                                                       )
 
-    transactions = []
+    balance = amount_format(account.get_balance())
+
+    transactions_format = []
 
     # For each transaction
-    for table_row in rows:
-        row = list(table_row)  # make it mutable
+    for transaction in transactions:
         # reverse the displayed amount if this wasn't incoming
-        display_account = row[3]
-        display_sort = row[2]
-        if not (row[4] == sort_code and row[5] == account_number):
-            row[6] *= -1
-            display_account = row[5]
-            display_sort = row[4]
+        display_account = transaction.to_account_number
+        display_sort = transaction.to_sort_code
+        display_amount = transaction.amount
+        if not (display_account == account_number and display_sort == sort_code):
+            display_amount *= -1
+            display_account = transaction.from_account_number
+            display_sort = transaction.from_sort_code
         # store transaction info
-        transactions.append({
-            "id": row[0],
-            "timestamp": row[1],
+        transactions_format.append({
+            "id": transaction.id,
+            "timestamp": transaction.timestamp,
             # a null sort code and account number means it was a cash deposit or withdrawal
             "sort": (display_sort if display_sort else "CASH"),
             "account": (display_account if display_account else "CASH"),
-            "amount": amount_format(row[6]),
-            "direction": ("in" if row[6] >= 0 else "out")
+            "amount": amount_format(display_amount),
+            "direction": ("in" if display_amount >= 0 else "out")
         })
 
-    return render_template("account.html", transactions=transactions, balance=balance)
+    return render_template("account.html", transactions=transactions_format, balance=balance)
 
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+
     # run this code on app start
     login_manager.init_app(app)
     # run the app with debug mode on to show full error messages

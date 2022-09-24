@@ -9,7 +9,7 @@ class User(db.Model, flask_login.UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Text, primary_key=True)
-    password = db.Column(db.Text, nullable=False)
+    password = db.Column(db.LargeBinary, nullable=False)
     fullname = db.Column(db.Text, nullable=False)
     credit_score = db.Column(db.Integer, nullable=False)
 

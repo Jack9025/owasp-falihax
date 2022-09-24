@@ -1,25 +1,28 @@
+import os
 import random
 import re
 import time
 from typing import Callable, Optional, List, Dict
-
 import bcrypt
 import flask_login
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_login import current_user, login_required
 from flask_simple_captcha import CAPTCHA
 from models import User, db, BankAccount, Transaction
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'hello'
+app.secret_key = os.getenv('SECRET_KEY')
 
 # Database
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DB_URI')
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 # CAPTCHA
-CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY': 'wMmeltW4mhwidorQRli6Oijuhygtfgybunxx9VPXldz'}
+CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY': os.getenv('SECRET_CAPTCHA_KEY')}
 CAPTCHA = CAPTCHA(config=CAPTCHA_CONFIG)
 app = CAPTCHA.init_app(app)
 

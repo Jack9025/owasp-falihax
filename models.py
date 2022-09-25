@@ -12,6 +12,7 @@ class User(db.Model, flask_login.UserMixin):
     password = db.Column(db.LargeBinary, nullable=False)
     fullname = db.Column(db.Text, nullable=False)
     credit_score = db.Column(db.Integer, nullable=False)
+    is_admin = db.Column(db.BOOLEAN)
 
 
 class Transaction(db.Model):

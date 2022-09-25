@@ -2,6 +2,7 @@ import os
 import random
 import re
 import time
+from functools import wraps
 from typing import Callable, Optional, List, Dict
 import bcrypt
 import flask_login
@@ -69,6 +70,17 @@ def add_to_navbar(name: str, side: Optional[str] = None, condition: Optional[Cal
 
     return __inner
 
+
+def admin_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            return render_template("error.html",
+                                   error_msg="You must be an admin to access this page"), 401
+
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 def amount_format(amount: int) -> str:
     """
@@ -363,15 +375,13 @@ def make_transaction():
 
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
-@add_to_navbar("Admin", condition=lambda: current_user.is_authenticated and current_user.id == "admin")
+@admin_required
+@add_to_navbar("Admin", condition=lambda: current_user.is_authenticated and current_user.is_admin)
 def admin():
     """Allows admins to adjust users' credit scores"""
     # Check user can access the admin page
     user = flask_login.current_user
     username = user.id
-    if username != "admin":
-        return render_template("error.html",
-                               error_msg="You must be an admin to access this page"), 401
 
     # Returns a credit score form when the user navigates to the page
     if request.method == 'GET':

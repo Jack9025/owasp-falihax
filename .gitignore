@@ -1,0 +1,4 @@
+*.db
+./postgres_db
+.idea/
+.env

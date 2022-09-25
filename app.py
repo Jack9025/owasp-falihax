@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Database
-if os.getenv('DB_POSTGRES') == "True":
+if os.getenv('DB_POSTGRESQL') == "True":
     app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{os.getenv('DB_USER')}:" \
                                             f"{os.getenv('DB_PASS')}@localhost:5432/falihax"
 else:

@@ -4,6 +4,7 @@
     <h1 class="display-5">Open an Account</h1>
     <div class="row">
         <form method='POST' class="col-12 col-lg-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="account" class="form-select my-3">
                 <option selected disabled>Choose an account...</option>
                 {%- for account_name in account_names -%}

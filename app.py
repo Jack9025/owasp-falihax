@@ -11,6 +11,7 @@ from flask_login import current_user, login_required
 from flask_simple_captcha import CAPTCHA
 from models import User, db, BankAccount, Transaction
 from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFProtect
 
 load_dotenv()
 
@@ -30,6 +31,10 @@ db.init_app(app)
 CAPTCHA_CONFIG = {'SECRET_CAPTCHA_KEY': os.getenv('SECRET_CAPTCHA_KEY')}
 CAPTCHA = CAPTCHA(config=CAPTCHA_CONFIG)
 app = CAPTCHA.init_app(app)
+
+# CSRF Token
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)

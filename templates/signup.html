@@ -4,6 +4,7 @@
     <h1 class="display-5 mb-4 text-center">Sign Up</h1>
     <div class="row">
         <form method='POST' class="col-12 col-lg-5 mx-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input class="form-control mb-3" type='text' name='fullname' id='fullname' placeholder='Full Name'/>
             <input class="form-control mb-3" type='text' name='username' id='username' placeholder='Username'/>
             <input class="form-control mb-1" type='password' name='password' id='password' placeholder='Password'/>

@@ -87,6 +87,7 @@ def admin_required(func):
 
     return decorated_view
 
+
 def amount_format(amount: int) -> str:
     """
     A helper function to take a signed amount in pence and render as a string.
@@ -260,7 +261,6 @@ def open_account():
     """Used to open a bank account for the current user"""
     # Returns an account selection form when the user navigates to the page
     if request.method == 'GET':
-        company_name = define_name_constants()['company_name']
         return render_template("open_account.html", account_names=ACCOUNT_NAMES)
 
     # Retrieves the account type from the form
@@ -355,10 +355,10 @@ def make_transaction():
     user = flask_login.current_user
     username = user.id
 
-    # Attempts to retrieve a bank account from the DATABASE which matches the 'from' details entered and belongs to the current user
+    # Attempts to retrieve a bank account from the DATABASE which matches the 'from' details entered
     from_account = db.session.get(BankAccount, (usersort, useracc))
 
-    # If nothing is retrieved then the details are incorrect
+    # If nothing is retrieved or account is not owned by user then the details are incorrect
     if from_account is None or from_account.username != username:
         flash('"From" account details are incorrect.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
@@ -384,10 +384,6 @@ def make_transaction():
 @add_to_navbar("Admin", condition=lambda: current_user.is_authenticated and current_user.is_admin)
 def admin():
     """Allows admins to adjust users' credit scores"""
-    # Check user can access the admin page
-    user = flask_login.current_user
-    username = user.id
-
     # Returns a credit score form when the user navigates to the page
     if request.method == 'GET':
         return render_template("admin.html")

@@ -103,18 +103,24 @@ Replace `YOUR_USERNAME` and `YOUR_PASSWORD` with a secure username/password comb
 for the Postgresql database.
 
 Before running the Flask application, run the following command to create/start the database:
-> docker-compose up
+```
+docker-compose up
+```
 
 When finished with the database, run the following command to close the database:
-> docker-compose down
+```
+docker-compose down
+```
 
 ### Running the Flask application
 Install the required Python libraries using the terminal command:
-> pip install -r requirements.txt
-
+```
+pip install -r requirements.txt
+```
 To run the Flask server, type in the terminal:
-> python app.py
-
+```
+python app.py
+```
 In your web browser, navigate to [127.0.0.1:5000](127.0.0.1:5000) to access the web application.
 
 ### Creating an admin account
@@ -122,6 +128,8 @@ An admin account will be able to set the credit score of users within the applic
 To create an account within the application you will need to have already created an account within
 the application. (Available at: [127.0.0.1:5000/signup](127.0.0.1:5000/signup))
 
-Next, you will need to run the admin script in terminal by running the following command and follow the 
+You will need to run the admin script in terminal by running the following command and follow the 
 prompt:
-> python create_admin.py
+```
+python create_admin.py
+```

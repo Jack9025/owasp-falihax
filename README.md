@@ -1,4 +1,4 @@
-<img src="static/falihax.png" width="200" />
+<img src="static/falihax.png" width="200" alt="Falihax logo"/>
 
 # Falihax OWASP Hackathon
 
@@ -12,20 +12,23 @@
   - [Creating an admin account](#Creating-an-admin-account)
 
 ## Introduction
-Falihax is a brand new, 100%* real and secure banking company. Last year, they
+Falihax is a fictional bank created as part of a hackathon run by [CyberSoc](https://cybersoc.org.uk/), 
+which was designed to include security vulnerabilities that needed to be fixed. This is a Flask application 
+in Python, which allows users to open a bank account, make bank transfers and view transactions from 
+bank accounts. The task was to find and fix as many security vulnerabilities as possible. 
+
+The premise for this hackathon from CyberSoc was:
+> Falihax is a brand new, 100%* real and secure banking company. Last year, they
 contracted a group of computer science students to build a website for them -
 unfortunately, none of these students
 were [CyberSoc](https://cybersoc.org.uk/?r=falihax) members and so didn't know
 how to build a web app securely.
-
-Recently, they have experienced a number of
+> Recently, they have experienced a number of
 attacks on their website. They are insistent that their website is very safe and
 not at all vulnerable, but nevertheless they have asked you to help them improve
 their security!
+> **percentage expressed in binary. 4% margin of error.*
 
-**percentage expressed in binary. 4% margin of error.*
-
-The task was to find as many security vulnerabilities as possible.
 [View the original repository](https://github.com/CyberSoc-Newcastle/owasp-falihax)
 
 ## Changelog
@@ -92,7 +95,7 @@ a mixture of upper and lowercase letter, numbers and special characters.
 ### Running Postgresql (optional but recommended)
 If the Postgresql database is not used, the Flask application will default to using a sqlite database.
 
-To use Postgresql, using the docker compose file, add the following to your `.env` file.
+To use Postgresql, using the docker compose file, add the following to your `.env` file:
 ```.env
 # Database settings
 DB_POSTGRESQL=True
@@ -121,12 +124,12 @@ To run the Flask server, type in the terminal:
 ```
 python app.py
 ```
-In your web browser, navigate to [127.0.0.1:5000](127.0.0.1:5000) to access the web application.
+In your web browser, navigate to `127.0.0.1:5000` to access the web application.
 
 ### Creating an admin account
 An admin account will be able to set the credit score of users within the application. 
 To create an account within the application you will need to have already created an account within
-the application. (Available at: [127.0.0.1:5000/signup](127.0.0.1:5000/signup))
+the application. (Available at: `127.0.0.1:5000/signup`)
 
 You will need to run the admin script in terminal by running the following command and follow the 
 prompt:

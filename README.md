@@ -7,7 +7,7 @@
 - [Changelog](#Changelog)
 - [Getting Started](#Getting-Started)
   - [Requirements](#Requirements)
-  - [Running Postgresql (optional but recommended)](#Running-Postgresql-(optional-but-recommended))
+  - [Running Postgresql (optional but recommended)](#Running-postgresql-optional-but-recommended)
   - [Running the Flask application](#Running-the-Flask-application)
   - [Creating an admin account](#Creating-an-admin-account)
 

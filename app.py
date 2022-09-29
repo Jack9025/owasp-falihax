@@ -98,6 +98,23 @@ def amount_format(amount: int) -> str:
     return f"{'-' if amount < 0 else ''}£{(abs(amount) // 100):,}.{(abs(amount) % 100):02}"
 
 
+def valid_username(username: str) -> bool:
+    """
+    Checks if a username meets the requirements of being between 3-16 characters or more in length and only
+    contain letters and numbers
+    :param username: username to be checked
+    :return: if the username was valid
+    """
+    if len(username) < 3 or len(username) > 16:
+        # Username must be between 3-16 characters
+        return False
+    elif re.search(r'[^A-Za-z0-9 ]', username):
+        # Username contains characters not allowed
+        return False
+    else:
+        return True
+
+
 def valid_password(password: str) -> bool:
     """
     Checks if a password is at least 8 characters and contains at least one capital, lowercase, number and
@@ -117,7 +134,7 @@ def valid_password(password: str) -> bool:
     elif not re.search(r'[0-9]', password):
         # Must contain a number
         return False
-    elif not re.search(r'\W', password):
+    elif not re.search(r'[^A-Za-z0-9]', password):
         # Must contain a special character
         return False
     else:
@@ -214,6 +231,11 @@ def signup():
     # If a row is retrieved then the username is already taken
     if user is not None:
         flash('An account with this username already exists. Please try again.', 'warning')
+        return render_template("signup.html", captcha=captcha)
+
+    # Check if username is valid
+    if not valid_username(username):
+        flash('Username must be between 3-16 characters long and only contain letters and numbers.', 'warning')
         return render_template("signup.html", captcha=captcha)
 
     # Retrieves the password and name from the form

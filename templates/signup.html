@@ -6,9 +6,9 @@
         <form method='POST' class="col-12 col-lg-5 mx-auto">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input class="form-control mb-3" type='text' name='fullname' id='fullname' placeholder='Full Name'/>
-            <input class="form-control mb-3" type='text' name='username' id='username' placeholder='Username'/>
+            <input class="form-control mb-1" type='text' name='username' id='username' placeholder='Username'/>
             <div class="mb-3 text-muted">
-                <p class="mb-1">
+                <p>
                     Username must be between 3-16 characters.
                 </p>
             </div>

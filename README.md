@@ -38,7 +38,7 @@ These are the changes that have been made from the original repository:
   - Added access control to: open account, view account, make transaction, admin and dashboard pages
   - Updated pages to use get method when accessed data submitted by forms
   - Changed SQL library from sqlite to SQLAlchemy
-  - Added secret environment file (hide secret details from repository)
+  - Added secret environment file (hide secret details from repository such as Flask key)
   - Added Postgresql support (with env file username and password to provide security)
   - Added database files to gitignore (to prevent them being pushed to repository)
   - Added CSRF token to forms

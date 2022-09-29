@@ -168,12 +168,12 @@ def login():
             session['failed_time'] = 0
 
     # Retrieves the username from the form
-    username = request.form.get('username')
+    username = str(request.form.get('username', ''))
 
     # Tries to retrieve a corresponding password from the DATABASE
     user = db.session.get(User, username)
 
-    password_form = request.form.get('password')
+    password_form = str(request.form.get('password', ''))
 
     # Checks that the password has been retrieved and whether it matches the password entered by the user
     if user is not None and bcrypt.checkpw(password_form.encode('utf-8'), user.password):

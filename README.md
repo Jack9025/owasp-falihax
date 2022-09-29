@@ -37,7 +37,7 @@ These are the changes that have been made from the original repository:
   - Updated SQL statements to avoid SQL injection
   - Added access control to: open account, view account, make transaction, admin and dashboard pages
   - Updated pages to use get method when accessed data submitted by forms
-  - Changed SQL from sqlite to SQLAlchemy
+  - Changed SQL library from sqlite to SQLAlchemy
   - Added secret environment file (hide secret details from repository)
   - Added Postgresql support (with env file username and password to provide security)
   - Added database files to gitignore (to prevent them being pushed to repository)
@@ -50,26 +50,35 @@ These are the changes that have been made from the original repository:
   - Added an attempted login counter to prevent the user trying to log in for 5 minutes to limit failed login attempts
   - Removed login_manager.request_loader (it allowed user to pass username to form to be authenticated without password)
   - Added captcha for user signup (to prevent bots from signing up)
-  - Added requirement on user signup that passwords must be at least 8 characters and contain a capital, lowercase, number and special character
+  - Added requirement that usernames must be between 3-16 characters and only contain letters and numbers
+  - Added requirement that passwords must be at least 8 characters and contain a capital, lowercase, number and special character
   - Added specific admin role (using database column) instead of allowing user with username of 'admin' to access admin page
   - Added script to grant pre-existing user with role of admin
 
 
 - **Make transaction page** 
+  - Added requirement that user must be logged in to access page
   - Added validation on amount is a float and number is above 0
   - Added validation to stop account from being able to transfer money to itself
 
 
 - **Open account page**
+  - Added requirement that user must be logged in to access page
   - Added validation to account name to ensure that only account names defined by the server are accepted
 
 
-- **Accounts page**
-  - Added validation to check that only the account owner can view transactions for the account
+- **View account page**
+  - Added requirement that user must be logged in to access page
+  - Added validation to check that account exists
+  - Added validation to allow only the account owner to view transactions for the account
+
+  
+- **Dashboard page**
+  - Added requirement that user must be logged in to access page
 
 
 - **Admin page**
-  - Added validation to check that user is admin to access admin page
+  - Added requirement that user must be logged in and has role admin to access admin page
   - Added validation of credit score is an integer and be in range of 0 and 999
 
 ## Getting Started
@@ -86,16 +95,16 @@ If using the Postgresql database provided, you will also need:
 Before attempting to run the server, you will need to create a file with the filename `.env` with the following contents:
 ```.env
 # Keys
-SECRET_KEY="YOUR_SECRET_KEY"
+SECRET_FLASK_KEY="YOUR_SECRET_FLASK_KEY"
 SECRET_CAPTCHA_KEY="YOUR_SECRET_CAPTCHA_KEY"
 ```
-Replace `YOUR_SECRET_KEY` and `YOUR_SECRET_CAPTCHA_KEY` with long random keys that contain 
+Replace `YOUR_SECRET_FLASK_KEY` and `YOUR_SECRET_CAPTCHA_KEY` with long random keys that contain 
 a mixture of upper and lowercase letter, numbers and special characters.
 
 ### Running Postgresql (optional but recommended)
 If the Postgresql database is not used, the Flask application will default to using a sqlite database.
 
-To use Postgresql, using the docker compose file, add the following to your `.env` file:
+To use Postgresql, using the docker compose file provided, add the following to your `.env` file:
 ```.env
 # Database settings
 DB_POSTGRESQL=True

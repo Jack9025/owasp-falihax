@@ -223,7 +223,7 @@ def signup():
         return render_template("signup.html", captcha=captcha)
 
     # Retrieves the username from the form
-    username = request.form.get('username')
+    username = str(request.form.get('username', ''))
 
     # Tries to retrieve a user from the DATABASE with the entered username
     user = db.session.get(User, username)
@@ -239,9 +239,9 @@ def signup():
         return render_template("signup.html", captcha=captcha)
 
     # Retrieves the password and name from the form
-    password = request.form.get('password')
-    password2 = request.form.get('password2')
-    fullname = request.form.get('fullname')
+    password = str(request.form.get('password', ''))
+    password2 = str(request.form.get('password2', ''))
+    fullname = str(request.form.get('fullname', ''))
 
     if password != password2:
         flash('Passwords did not match.', 'warning')

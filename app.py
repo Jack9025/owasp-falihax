@@ -16,7 +16,7 @@ from flask_wtf.csrf import CSRFProtect
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = os.getenv('SECRET_FLASK_KEY')
 
 # Database
 if os.getenv('DB_POSTGRESQL') == "True":

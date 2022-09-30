@@ -47,7 +47,7 @@ These are the changes that have been made from the original repository:
 - **User management**
   - Updated password hashing to use bcrypt with salt
   - Added double check of password to signup form
-  - Added an attempted login counter to prevent the user trying to log in for 5 minutes to limit failed login attempts
+  - Added an attempted login counter to limit the user to 5 failed login attempts before a 5-minute timeout
   - Removed login_manager.request_loader (it allowed user to pass username to form to be authenticated without password)
   - Added captcha for user signup (to prevent bots from signing up)
   - Added requirement that usernames must be between 3-16 characters and only contain letters and numbers

@@ -59,6 +59,7 @@ These are the changes that have been made from the original repository:
 - **Make transaction page** 
   - Added requirement that user must be logged in to access page
   - Added validation on amount is a float and number is above 0
+  - Added validation on amount to ensure that it does not exceed 10,000
   - Added validation to stop account from being able to transfer money to itself
 
 

@@ -364,6 +364,9 @@ def make_transaction():
     if amount <= 0:
         flash('Amount given to transfer needs to larger than £0.', 'danger')
         return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
+    elif amount > 10000*100:
+        flash('Amount given to transfer cannot exceed £10,000.', 'danger')
+        return render_template("make_transaction.html", accounts=get_accounts(flask_login.current_user.id))
 
     # Attempts to retrieve a bank account from the DATABASE which matches the 'to' details entered
     to_account = db.session.get(BankAccount, (sort, acc))

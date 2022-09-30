@@ -137,11 +137,11 @@ In your web browser, navigate to `127.0.0.1:5000` to access the web application.
 
 ### Creating an admin account
 An admin account will be able to set the credit score of users within the application. 
-To create an account within the application you will need to have already created an account within
-the application. (Available at: `127.0.0.1:5000/signup`)
+You will need to have already created an account within the application, before trying to
+make the user an admin. (Available at: `127.0.0.1:5000/signup`)
 
-You will need to run the admin script in terminal by running the following command and follow the 
-prompt:
+To make the user an admin, you will need to run the admin script in terminal by running the 
+following command and follow the prompt:
 ```
 python create_admin.py
 ```

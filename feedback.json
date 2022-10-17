@@ -1,0 +1,204 @@
+{
+  "repo": "Jack9025/owasp-falihax",
+  "summary": "A really *outstanding* entry. You really took your time and added almost everything imaginable to this once terrible web app - you should be proud of the secure website you've created! Great work!!",
+  "found_vulns": [
+    {
+      "id": "A01-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A01-02",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A01-03",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A02-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A03-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A04-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A04-02",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A04-03",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A05-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "A08-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "B01-02",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "B01-03",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "B02-01",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    },
+    {
+      "id": "B02-02",
+      "marks": {
+        "state": true,
+        "show": false,
+        "demo": false,
+        "mitigate": false,
+        "attempt": true,
+        "works": true,
+        "explain": false
+      }
+    }
+  ],
+  "additional": [
+    {
+      "name": "Very well formatted readme",
+      "description": "Readme file is very well formatted using markdown. It is a pleasure to read, especially with the nested bullet lists and good header hierarchy!"
+    },
+    {
+      "name": "Create admin script",
+      "description": "While not security critical, the script for creating an admin account is a nice touch! It helps prevent an attacker gaining access via some web control panel, as command line access to the server is required to promote a user to admin. "
+    },
+    {
+      "name": "Great git commits",
+      "description": "You commit often and atomically, which is really great to see. Commit messages are concise yet descriptive, and give a good overview of the development process!"
+    },
+    {
+      "name": "Same-account transfers",
+      "description": "Security-wise, the only issue with allowing an account to transfer money to itself is that this could be used to fill the database disk and cause a denial of service. Theoretically. However, preventing someone accidentally transferring money to the same account is a nice touch!"
+    },
+    {
+      "name": "Confirm/retype password on signup",
+      "description": "Not required for security reasons, but a great addition for user experience."
+    },
+    {
+      "name": "Use of ORM (SQLAlchemy)",
+      "description": "The code was purposely written without using an ORM just to see if anyone would take the relatively large amount of effort of implementing one. Unfortunately it doesn't get you a ton of points as it doesn't directly improve security, but it makes the entire project feel a lot more clean and polished! Nice work!"
+    },
+    {
+      "name": "Added PostgreSQL support",
+      "description": "PostgreSQL could potentially make the system *slightly* more secure with features like data encryption at rest available, however this bonus mark is just for adding it as an option!"
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 # Falihax OWASP Hackathon
 
+[**Now marked by CyberSoc, click here for personal feedback!**](FEEDBACK.md)
+
 ## Contents
 - [Introduction](#Introduction)
 - [Changelog](#Changelog)
